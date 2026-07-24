@@ -1,0 +1,79 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-114441256
+  namespace: migrate-114441256
+  labels:
+    app: app-114441256
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: app-114441256
+  template:
+    metadata:
+      labels:
+        app: app-114441256
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.27-alpine
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 80
+          name: http
+        volumeMounts:
+        - name: html
+          mountPath: /usr/share/nginx/html
+        readinessProbe:
+          httpGet:
+            path: /index.html
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 5
+      - name: updater
+        image: mysql:8.4
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: MYSQL_PWD
+          valueFrom:
+            secretKeyRef:
+              name: db-credentials-114441256
+              key: MYSQL_ROOT_PASSWORD
+        - name: CLUSTER_LABEL
+          value: "A"
+        command:
+        - /bin/bash
+        - -c
+        - |
+          set -u
+          while true; do
+            COUNT=$(mysql -h db-114441256 -uroot -N -B -e "SELECT COUNT(*) FROM appdb.records;" 2>/dev/null || echo "unavailable")
+            TS=$(date -u +"%Y-%m-%d %H:%M:%S UTC")
+            cat > /usr/share/nginx/html/index.html <<HTML
+          <!doctype html>
+          <html>
+          <head><title>CLO835 Project 6 - Cluster ${CLUSTER_LABEL}</title>
+          <meta http-equiv="refresh" content="5">
+          <style>body{font-family:sans-serif;max-width:600px;margin:40px auto;padding:20px;background:#f4f4f4}h1{color:#333}.card{background:white;padding:20px;border-radius:8px;box-shadow:0 2px 4px rgba(0,0,0,0.1)}.big{font-size:48px;color:#0066cc;font-weight:bold}</style>
+          </head>
+          <body>
+          <div class="card">
+          <h1>CLO835 Project 6</h1>
+          <p><strong>Cluster:</strong> ${CLUSTER_LABEL}</p>
+          <p><strong>Student ID:</strong> 114441256</p>
+          <p><strong>Row count:</strong></p>
+          <div class="big">${COUNT}</div>
+          <p><small>Updated: ${TS}</small></p>
+          </div>
+          </body>
+          </html>
+          HTML
+            sleep 10
+          done
+        volumeMounts:
+        - name: html
+          mountPath: /usr/share/nginx/html
+      volumes:
+      - name: html
+        emptyDir: {}
