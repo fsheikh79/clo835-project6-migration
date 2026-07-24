@@ -1,0 +1,73 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: dump-114441256
+  namespace: migrate-114441256
+  labels:
+    app: dump-114441256
+spec:
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 3600
+  template:
+    metadata:
+      labels:
+        app: dump-114441256
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: dump
+        image: mysql:8.4
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: MYSQL_PWD
+          valueFrom:
+            secretKeyRef:
+              name: db-credentials-114441256
+              key: MYSQL_ROOT_PASSWORD
+        command:
+        - /bin/bash
+        - -c
+        - |
+          set -eu
+          echo "=== Dump Job for cluster A ==="
+          echo "Waiting for DB to be reachable..."
+          for i in $(seq 1 30); do
+            if mysqladmin ping -h db-114441256 -uroot --silent 2>/dev/null; then
+              echo "DB is reachable"
+              break
+            fi
+            echo "attempt $i: DB not ready, sleeping 2s"
+            sleep 2
+          done
+
+          COUNT=$(mysql -h db-114441256 -uroot -N -B -e "SELECT COUNT(*) FROM appdb.records;")
+          echo "Row count on cluster A before dump: $COUNT"
+
+          echo "Running ordered mysqldump..."
+          mysqldump \
+            -h db-114441256 \
+            -uroot \
+            --order-by-primary \
+            --skip-dump-date \
+            --skip-comments \
+            --no-tablespaces \
+            --set-gtid-purged=OFF \
+            --single-transaction \
+            --databases appdb \
+            > /mnt/migrate/dump.sql
+
+          BYTES=$(stat -c%s /mnt/migrate/dump.sql)
+          echo "Dump file size: $BYTES bytes"
+
+          echo "SHA256 of dump.sql:"
+          sha256sum /mnt/migrate/dump.sql
+
+          echo "=== Dump job complete ==="
+        volumeMounts:
+        - name: migrate
+          mountPath: /mnt/migrate
+      volumes:
+      - name: migrate
+        hostPath:
+          path: /mnt/migrate
+          type: Directory
