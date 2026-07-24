@@ -1,0 +1,38 @@
+=== Rehearsal 1 - 2026-07-24T20:41:14Z ===
+
+--- Cluster A ---
+=== VERIFY on context: kind-a ===
+
+--- Row count ---
+500
+
+--- First 3 rows (proof rows contain student ID) ---
+id	payload	created_at
+1	seed-114441256-000001	2026-07-24 19:57:53
+2	seed-114441256-000002	2026-07-24 19:57:53
+3	seed-114441256-000003	2026-07-24 19:57:53
+
+--- SHA256 of ordered dump ---
+6ff652fd25cf43d4a10ce247395ef9413c58e0895c02f637e08bc6618bdcae43
+
+=== VERIFY complete for kind-a ===
+
+--- Cluster B ---
+=== VERIFY on context: kind-b ===
+
+--- Row count ---
+500
+
+--- First 3 rows (proof rows contain student ID) ---
+id	payload	created_at
+1	seed-114441256-000001	2026-07-24 19:57:53
+2	seed-114441256-000002	2026-07-24 19:57:53
+3	seed-114441256-000003	2026-07-24 19:57:53
+
+--- SHA256 of ordered dump ---
+6ff652fd25cf43d4a10ce247395ef9413c58e0895c02f637e08bc6618bdcae43
+
+=== VERIFY complete for kind-b ===
+
+--- SHA256 of dump.sql on host ---
+6ff652fd25cf43d4a10ce247395ef9413c58e0895c02f637e08bc6618bdcae43  /tmp/migrate-114441256/dump.sql
