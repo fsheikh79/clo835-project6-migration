@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: migrate-114441256
+  labels:
+    project: clo835-p6
+    student: "114441256"

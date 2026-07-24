@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: db-init-114441256
+  namespace: migrate-114441256
+data:
+  01-schema.sql: |
+    CREATE TABLE IF NOT EXISTS records (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      payload VARCHAR(255) NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+  02-seed.sql: |
+    -- Seed 500 rows, each row's payload stamped with student ID
+    -- Uses a recursive CTE to generate rows without a stored procedure
+    INSERT INTO records (payload)
+    WITH RECURSIVE seq(n) AS (
+      SELECT 1
+      UNION ALL
+      SELECT n + 1 FROM seq WHERE n < 500
+    )
+    SELECT CONCAT('seed-114441256-', LPAD(n, 6, '0')) FROM seq;
